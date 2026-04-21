@@ -1,177 +1,116 @@
-import { LiquidMetalBackground } from "@/components/LiquidMetalBackground"
-import { useRef, useState, useEffect } from "react"
-import Icon from "@/components/ui/icon"
+import { Link } from "react-router-dom";
+import Icon from "@/components/ui/icon";
 
 const GAMES = [
-  { name: "Roblox", icon: "Gamepad2", items: ["Robux", "Gamepass", "Предметы"] },
-  { name: "Standoff 2", icon: "Sword", items: ["Золото", "Скины", "Стикеры"] },
-  { name: "CS2", icon: "Target", items: ["Скины", "Faceit", "Кейсы"] },
-  { name: "Mobile Legends", icon: "Zap", items: ["Алмазы", "Starlight", "Скины"] },
-  { name: "Apex Legends", icon: "Shield", items: ["Монеты", "Drops", "Скины"] },
-  { name: "App Store", icon: "Smartphone", items: ["Подарочные карты", "Покупки"] },
-]
+  { name: "Roblox", slug: "roblox", emoji: "🎮", color: "from-red-400 to-orange-400", items: "Robux, предметы, gamepass", count: "2 840 предложений" },
+  { name: "Standoff 2", slug: "standoff-2", emoji: "🔫", color: "from-yellow-400 to-orange-500", items: "Золото, скины, стикеры", count: "1 230 предложений" },
+  { name: "CS2", slug: "cs2", emoji: "🎯", color: "from-orange-400 to-red-500", items: "Скины, кейсы, Faceit", count: "3 560 предложений" },
+  { name: "Mobile Legends", slug: "mobile-legends", emoji: "⚡", color: "from-blue-400 to-cyan-400", items: "Алмазы, Starlight, скины", count: "980 предложений" },
+  { name: "Apex Legends", slug: "apex-legends", emoji: "🦊", color: "from-red-500 to-pink-500", items: "Монеты, скины, Drops", count: "640 предложений" },
+  { name: "Minecraft", slug: "minecraft", emoji: "⛏️", color: "from-green-400 to-emerald-500", items: "Аккаунты, читы, моды", count: "420 предложений" },
+  { name: "Fortnite", slug: "fortnite", emoji: "🌪️", color: "from-purple-400 to-violet-500", items: "V-Bucks, скины, аккаунты", count: "1 100 предложений" },
+  { name: "Valorant", slug: "valorant", emoji: "💎", color: "from-rose-400 to-red-500", items: "VP, скины, аккаунты", count: "780 предложений" },
+];
+
+const OFFERS = [
+  { id: 1, game: "Roblox", title: "800 Robux", price: "149 ₽", seller: "GameMaster", rating: 4.9, reviews: 234, badge: "Быстро", slug: "roblox" },
+  { id: 2, game: "Standoff 2", title: "1000 золота", price: "89 ₽", seller: "StarSeller", rating: 5.0, reviews: 892, badge: "Топ", slug: "standoff-2" },
+  { id: 3, game: "CS2", title: "Скин AK-47 | Redline", price: "2 400 ₽", seller: "SkinTrader", rating: 4.8, reviews: 156, badge: null, slug: "cs2" },
+  { id: 4, game: "Mobile Legends", title: "500 алмазов", price: "320 ₽", seller: "MLBBpro", rating: 4.9, reviews: 445, badge: "Популярно", slug: "mobile-legends" },
+  { id: 5, game: "Apex Legends", title: "1000 монет Apex", price: "890 ₽", seller: "ApexKing", rating: 4.7, reviews: 89, badge: null, slug: "apex-legends" },
+  { id: 6, game: "Roblox", title: "2000 Robux", price: "299 ₽", seller: "RobuxShop", rating: 5.0, reviews: 1203, badge: "Хит", slug: "roblox" },
+];
 
 const HOW_IT_WORKS = [
-  {
-    step: "01",
-    title: "Выбери товар",
-    desc: "Найди нужную игровую валюту, предмет или услугу в каталоге. Тысячи предложений от реальных игроков.",
-  },
-  {
-    step: "02",
-    title: "Оплати безопасно",
-    desc: "Средства поступают на эскроу-счёт. Продавец не получит деньги, пока ты не подтвердишь сделку.",
-  },
-  {
-    step: "03",
-    title: "Получи товар",
-    desc: "Продавец передаёт товар. Ты проверяешь и подтверждаешь. Деньги моментально уходят продавцу.",
-  },
-]
+  { step: "1", icon: "Search", title: "Выбери товар", desc: "Найди нужную игровую валюту, предмет или услугу. Тысячи предложений от реальных игроков." },
+  { step: "2", icon: "CreditCard", title: "Оплати безопасно", desc: "Средства поступают на эскроу-счёт. Продавец не получит деньги, пока ты не подтвердишь сделку." },
+  { step: "3", icon: "PackageCheck", title: "Получи товар", desc: "Продавец передаёт товар. Ты проверяешь и подтверждаешь — деньги моментально уходят продавцу." },
+];
 
 const FEATURES = [
-  { icon: "ShieldCheck", title: "Защита сделок", desc: "Эскроу-система защищает покупателя и продавца на каждом шаге." },
-  { icon: "Zap", title: "Мгновенно", desc: "Большинство сделок завершается за несколько минут." },
-  { icon: "Users", title: "P2P торговля", desc: "Напрямую между игроками — без посредников и наценок." },
-  { icon: "Star", title: "Рейтинг", desc: "Проверенные продавцы с историей и отзывами реальных покупателей." },
-  { icon: "Globe", title: "Любая игра", desc: "Roblox, CS2, Standoff, Mobile Legends, Apex и ещё сотни игр." },
-  { icon: "HeadphonesIcon", title: "Поддержка 24/7", desc: "Команда всегда на связи для решения любых спорных ситуаций." },
-]
+  { icon: "ShieldCheck", title: "Защита покупателя", desc: "Эскроу-система гарантирует безопасность каждой сделки. Ваши деньги под защитой.", color: "bg-violet-100 text-violet-600" },
+  { icon: "Zap", title: "Быстрые сделки", desc: "Большинство сделок завершается за несколько минут. Продавцы онлайн 24/7.", color: "bg-yellow-100 text-yellow-600" },
+  { icon: "Users", title: "P2P торговля", desc: "Напрямую между игроками — без посредников и скрытых наценок.", color: "bg-blue-100 text-blue-600" },
+  { icon: "Headphones", title: "Поддержка 24/7", desc: "Команда всегда на связи для решения любых спорных ситуаций.", color: "bg-green-100 text-green-600" },
+];
 
-const STATS = [
-  { value: "500К+", label: "Сделок завершено" },
-  { value: "120К+", label: "Активных игроков" },
-  { value: "98%", label: "Довольных покупателей" },
-  { value: "200+", label: "Игр на бирже" },
-]
+const BADGE_COLORS: Record<string, string> = {
+  "Топ": "bg-amber-100 text-amber-700",
+  "Быстро": "bg-green-100 text-green-700",
+  "Хит": "bg-rose-100 text-rose-700",
+  "Популярно": "bg-blue-100 text-blue-700",
+};
 
 export default function Index() {
-  const [activeSection, setActiveSection] = useState(0)
-  const [menuOpen, setMenuOpen] = useState(false)
-  const containerRef = useRef<HTMLDivElement>(null)
-
-  const sections = ["home", "how", "games", "features", "contact"]
-  const sectionLabels = ["Главная", "Как работает", "Игры", "Преимущества", "Контакты"]
-
-  const scrollTo = (idx: number) => {
-    containerRef.current?.scrollTo({ left: idx * window.innerWidth, behavior: "smooth" })
-    setMenuOpen(false)
-  }
-
-  useEffect(() => {
-    const el = containerRef.current
-    if (!el) return
-    const onScroll = () => {
-      const idx = Math.round(el.scrollLeft / el.offsetWidth)
-      setActiveSection(idx)
-    }
-    el.addEventListener("scroll", onScroll)
-    return () => el.removeEventListener("scroll", onScroll)
-  }, [])
-
-  useEffect(() => {
-    const el = containerRef.current
-    if (!el) return
-    const handleWheel = (e: WheelEvent) => {
-      e.preventDefault()
-      const idx = Math.round(el.scrollLeft / el.offsetWidth)
-      const next = e.deltaY > 0 ? Math.min(idx + 1, sections.length - 1) : Math.max(idx - 1, 0)
-      el.scrollTo({ left: next * window.innerWidth, behavior: "smooth" })
-    }
-    el.addEventListener("wheel", handleWheel, { passive: false })
-    return () => el.removeEventListener("wheel", handleWheel)
-  }, [sections.length])
-
   return (
-    <main className="relative h-screen w-screen overflow-hidden bg-[#08010f]">
-      <LiquidMetalBackground />
-      <div className="absolute inset-0 bg-black/60 z-[1]" />
-
+    <div className="min-h-screen bg-gray-50 font-inter">
       {/* NAVBAR */}
-      <nav className="fixed top-0 left-0 right-0 z-50 px-4 py-4">
-        <div className="mx-auto max-w-7xl flex items-center justify-between px-6 py-3 rounded-2xl border border-purple-500/20 bg-black/40 backdrop-blur-xl">
-          <button onClick={() => scrollTo(0)} className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-violet-700 flex items-center justify-center">
-              <Icon name="Star" size={16} className="text-white fill-white" />
+      <nav className="bg-white shadow-sm border-b border-gray-100 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            <Link to="/" className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg astrex-gradient flex items-center justify-center">
+                <Icon name="Zap" size={16} className="text-white" />
+              </div>
+              <span className="text-xl font-black text-violet-600 tracking-tight">ASTREX</span>
+            </Link>
+
+            <div className="flex-1 max-w-md mx-8 hidden md:block">
+              <div className="relative">
+                <Icon name="Search" size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Поиск товаров, игр..."
+                  className="w-full pl-9 pr-4 py-2 bg-gray-100 rounded-lg text-sm text-gray-700 placeholder-gray-400 border border-gray-200 focus:outline-none focus:border-violet-400 focus:bg-white transition-all"
+                />
+              </div>
             </div>
-            <span className="text-white font-bold text-xl tracking-wider">STARVELL</span>
-          </button>
 
-          <div className="hidden md:flex items-center gap-8">
-            {sectionLabels.map((label, i) => (
-              <button
-                key={i}
-                onClick={() => scrollTo(i)}
-                className={`text-sm font-medium transition-colors ${
-                  activeSection === i ? "text-purple-300" : "text-gray-400 hover:text-white"
-                }`}
+            <div className="flex items-center gap-3">
+              <Link
+                to="/login"
+                className="px-4 py-2 text-sm font-medium text-violet-600 border border-violet-600 rounded-lg hover:bg-violet-50 transition-colors"
               >
-                {label}
-              </button>
-            ))}
+                Войти
+              </Link>
+              <Link
+                to="/register"
+                className="px-4 py-2 text-sm font-semibold text-white bg-violet-600 rounded-lg hover:bg-violet-700 transition-colors"
+              >
+                Регистрация
+              </Link>
+            </div>
           </div>
-
-          <div className="hidden md:flex items-center gap-3">
-            <button className="text-sm text-gray-300 hover:text-white transition-colors px-4 py-2">
-              Войти
-            </button>
-            <button className="text-sm font-semibold px-5 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-violet-600 text-white hover:from-purple-500 hover:to-violet-500 transition-all shadow-lg shadow-purple-500/25">
-              Регистрация
-            </button>
-          </div>
-
-          <button className="md:hidden text-white" onClick={() => setMenuOpen(!menuOpen)}>
-            <Icon name={menuOpen ? "X" : "Menu"} size={24} />
-          </button>
         </div>
-
-        {menuOpen && (
-          <div className="md:hidden mt-2 mx-auto max-w-7xl rounded-2xl border border-purple-500/20 bg-black/90 backdrop-blur-xl p-4">
-            {sectionLabels.map((label, i) => (
-              <button
-                key={i}
-                onClick={() => scrollTo(i)}
-                className="block w-full text-left px-4 py-3 text-gray-300 hover:text-white text-sm"
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-        )}
       </nav>
 
-      {/* SCROLL CONTAINER */}
-      <div
-        ref={containerRef}
-        className="relative z-10 flex h-screen overflow-x-auto overflow-y-hidden snap-x snap-mandatory"
-        style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-      >
-
-        {/* SECTION 1 — HERO */}
-        <section className="min-w-full snap-start flex flex-col items-center justify-center px-4 py-20 text-center">
-          <div className="max-w-5xl mx-auto">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-purple-500/30 bg-purple-500/10 text-purple-300 text-sm font-medium mb-8">
-              <div className="w-2 h-2 rounded-full bg-purple-400 animate-pulse" />
-              Биржа игровых товаров и услуг
+      {/* HERO */}
+      <section className="bg-white border-b border-gray-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
+          <div className="text-center max-w-4xl mx-auto">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-violet-50 border border-violet-200 rounded-full text-violet-700 text-sm font-medium mb-6">
+              <div className="w-2 h-2 rounded-full bg-violet-500 animate-pulse" />
+              Биржа игровых товаров нового поколения
             </div>
 
-            <h1 className="text-5xl md:text-7xl lg:text-8xl font-black text-white mb-6 leading-none tracking-tight">
+            <h1 className="text-4xl md:text-6xl lg:text-7xl font-black text-gray-900 leading-tight mb-6">
               Покупай и продавай{" "}
-              <span className="bg-gradient-to-r from-purple-400 via-violet-400 to-fuchsia-400 bg-clip-text text-transparent">
-                игровые ценности
-              </span>
+              <span className="astrex-gradient-text">игровые ценности</span>
             </h1>
 
-            <p className="text-lg md:text-xl text-gray-400 max-w-2xl mx-auto mb-10 leading-relaxed">
-              На бирже STARVELL вы можете купить игровую валюту, предметы, услуги и другие игровые ценности напрямую у других игроков, а также продать свои.
+            <p className="text-lg md:text-xl text-gray-500 max-w-2xl mx-auto mb-10">
+              На бирже ASTREX вы можете купить игровую валюту, предметы и услуги напрямую у других игроков. Быстро, безопасно, выгодно.
             </p>
 
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
-              <button className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-gradient-to-r from-purple-600 to-violet-600 text-white font-bold text-base hover:from-purple-500 hover:to-violet-500 transition-all shadow-xl shadow-purple-500/30 flex items-center justify-center gap-2">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-14">
+              <Link
+                to="/game/roblox"
+                className="w-full sm:w-auto px-8 py-3.5 rounded-xl astrex-gradient text-white font-semibold text-base hover:opacity-90 transition-opacity flex items-center justify-center gap-2 shadow-lg shadow-violet-200"
+              >
                 <Icon name="ShoppingBag" size={18} />
                 Перейти на биржу
-              </button>
-              <button className="w-full sm:w-auto px-8 py-4 rounded-2xl border border-white/10 bg-white/5 text-white font-semibold text-base hover:bg-white/10 transition-all flex items-center justify-center gap-2">
+              </Link>
+              <button className="w-full sm:w-auto px-8 py-3.5 rounded-xl border border-gray-200 bg-white text-gray-700 font-semibold text-base hover:border-violet-300 hover:text-violet-600 transition-colors flex items-center justify-center gap-2">
                 <Icon name="TrendingUp" size={18} />
                 Продать товар
               </button>
@@ -179,207 +118,209 @@ export default function Index() {
 
             {/* STATS */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {STATS.map((s, i) => (
-                <div key={i} className="rounded-2xl border border-white/5 bg-white/5 backdrop-blur-sm p-4">
-                  <div className="text-3xl font-black text-white mb-1">{s.value}</div>
-                  <div className="text-gray-400 text-sm">{s.label}</div>
+              {[
+                { value: "500К+", label: "Сделок завершено", color: "bg-violet-50 text-violet-700 border-violet-100" },
+                { value: "120К+", label: "Активных игроков", color: "bg-blue-50 text-blue-700 border-blue-100" },
+                { value: "200+", label: "Игр на бирже", color: "bg-green-50 text-green-700 border-green-100" },
+                { value: "98%", label: "Довольных покупателей", color: "bg-amber-50 text-amber-700 border-amber-100" },
+              ].map((stat, i) => (
+                <div key={i} className={`rounded-xl border p-4 ${stat.color}`}>
+                  <div className="text-2xl md:text-3xl font-black mb-1">{stat.value}</div>
+                  <div className="text-sm opacity-80">{stat.label}</div>
                 </div>
               ))}
             </div>
           </div>
-        </section>
+        </div>
+      </section>
 
-        {/* SECTION 2 — HOW IT WORKS */}
-        <section className="min-w-full snap-start flex flex-col items-center justify-center px-4 py-20">
-          <div className="max-w-5xl mx-auto w-full">
-            <div className="text-center mb-14">
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-purple-500/30 bg-purple-500/10 text-purple-300 text-sm font-medium mb-4">
-                <Icon name="HelpCircle" size={14} />
-                Как это работает
-              </div>
-              <h2 className="text-4xl md:text-6xl font-black text-white mb-4">Три простых шага</h2>
-              <p className="text-gray-400 text-lg max-w-xl mx-auto">Безопасная P2P торговля — деньги в эскроу до завершения сделки</p>
+      {/* POPULAR GAMES */}
+      <section className="py-16 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h2 className="text-2xl md:text-3xl font-bold text-gray-900">Популярные игры</h2>
+              <p className="text-gray-500 mt-1">Выбери игру и найди лучшие предложения</p>
             </div>
+            <Link to="/game/roblox" className="text-violet-600 text-sm font-medium hover:text-violet-700 flex items-center gap-1">
+              Все игры <Icon name="ChevronRight" size={16} />
+            </Link>
+          </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {HOW_IT_WORKS.map((item, i) => (
-                <div
-                  key={i}
-                  className="relative rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm p-8 overflow-hidden group hover:border-purple-500/40 transition-all"
-                >
-                  <div className="absolute top-0 right-0 text-[120px] font-black text-white/3 leading-none select-none">{item.step}</div>
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-600/30 to-violet-600/30 border border-purple-500/30 flex items-center justify-center mb-6">
-                    <span className="text-purple-300 text-lg font-black">{item.step}</span>
-                  </div>
-                  <h3 className="text-white font-bold text-xl mb-3">{item.title}</h3>
-                  <p className="text-gray-400 text-sm leading-relaxed">{item.desc}</p>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+            {GAMES.map((game) => (
+              <Link
+                key={game.slug}
+                to={`/game/${game.slug}`}
+                className="bg-white rounded-xl border border-gray-100 p-5 card-hover cursor-pointer group"
+              >
+                <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${game.color} flex items-center justify-center text-2xl mb-3`}>
+                  {game.emoji}
                 </div>
-              ))}
+                <h3 className="font-bold text-gray-900 text-sm mb-1 group-hover:text-violet-600 transition-colors">{game.name}</h3>
+                <p className="text-xs text-gray-400 mb-2 leading-relaxed">{game.items}</p>
+                <span className="text-xs text-violet-600 font-medium">{game.count}</span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* POPULAR OFFERS */}
+      <section className="py-16 bg-white border-y border-gray-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h2 className="text-2xl md:text-3xl font-bold text-gray-900">Популярные предложения</h2>
+              <p className="text-gray-500 mt-1">Лучшие цены от проверенных продавцов</p>
             </div>
           </div>
-        </section>
 
-        {/* SECTION 3 — GAMES */}
-        <section className="min-w-full snap-start flex flex-col items-center justify-center px-4 py-20">
-          <div className="max-w-6xl mx-auto w-full">
-            <div className="text-center mb-14">
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-purple-500/30 bg-purple-500/10 text-purple-300 text-sm font-medium mb-4">
-                <Icon name="Gamepad2" size={14} />
-                Популярные игры
-              </div>
-              <h2 className="text-4xl md:text-6xl font-black text-white mb-4">200+ игр на бирже</h2>
-              <p className="text-gray-400 text-lg max-w-xl mx-auto">Валюта, предметы и услуги для всех популярных игр</p>
-            </div>
-
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              {GAMES.map((game, i) => (
-                <div
-                  key={i}
-                  className="group rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm p-6 hover:border-purple-500/40 hover:bg-purple-500/5 transition-all cursor-pointer"
-                >
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-600/30 to-violet-600/30 border border-purple-500/20 flex items-center justify-center">
-                      <Icon name={game.icon as "Gamepad2"} size={18} className="text-purple-300" />
-                    </div>
-                    <span className="text-white font-bold">{game.name}</span>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {game.items.map((item, j) => (
-                      <span key={j} className="text-xs px-3 py-1 rounded-full bg-white/5 border border-white/10 text-gray-400">
-                        {item}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="text-center mt-8">
-              <button className="inline-flex items-center gap-2 px-6 py-3 rounded-xl border border-white/10 bg-white/5 text-gray-300 hover:text-white hover:bg-white/10 transition-all text-sm font-medium">
-                Смотреть все игры
-                <Icon name="ArrowRight" size={16} />
-              </button>
-            </div>
-          </div>
-        </section>
-
-        {/* SECTION 4 — FEATURES */}
-        <section className="min-w-full snap-start flex flex-col items-center justify-center px-4 py-20">
-          <div className="max-w-6xl mx-auto w-full">
-            <div className="text-center mb-14">
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-purple-500/30 bg-purple-500/10 text-purple-300 text-sm font-medium mb-4">
-                <Icon name="Sparkles" size={14} />
-                Преимущества
-              </div>
-              <h2 className="text-4xl md:text-6xl font-black text-white mb-4">Почему STARVELL</h2>
-              <p className="text-gray-400 text-lg max-w-xl mx-auto">Биржа, которой доверяют тысячи игроков каждый день</p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {FEATURES.map((f, i) => (
-                <div
-                  key={i}
-                  className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm p-6 hover:border-purple-500/30 hover:bg-purple-500/5 transition-all group"
-                >
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-600/20 to-violet-600/20 border border-purple-500/20 flex items-center justify-center mb-4 group-hover:from-purple-600/40 group-hover:to-violet-600/40 transition-all">
-                    <Icon name={f.icon as "Star"} size={20} className="text-purple-300" />
-                  </div>
-                  <h3 className="text-white font-bold text-lg mb-2">{f.title}</h3>
-                  <p className="text-gray-400 text-sm leading-relaxed">{f.desc}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* SECTION 5 — CONTACT */}
-        <section className="min-w-full snap-start flex flex-col items-center justify-center px-4 py-20">
-          <div className="max-w-4xl mx-auto w-full">
-            <div className="text-center mb-14">
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-purple-500/30 bg-purple-500/10 text-purple-300 text-sm font-medium mb-4">
-                <Icon name="Mail" size={14} />
-                Поддержка
-              </div>
-              <h2 className="text-4xl md:text-6xl font-black text-white mb-4">Напишите нам</h2>
-              <p className="text-gray-400 text-lg max-w-xl mx-auto">Вопросы по сделкам или предложения? Отвечаем быстро.</p>
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-6">
-              {/* Контактная инфо */}
-              <div className="space-y-4">
-                {[
-                  { icon: "Mail", label: "Email", value: "support@starvell.com" },
-                  { icon: "MessageCircle", label: "Telegram", value: "@starvell_support" },
-                  { icon: "Clock", label: "Время работы", value: "24/7 без выходных" },
-                ].map((c, i) => (
-                  <div key={i} className="flex items-center gap-4 rounded-2xl border border-white/10 bg-white/5 p-5">
-                    <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-purple-600/30 to-violet-600/30 border border-purple-500/20 flex items-center justify-center flex-shrink-0">
-                      <Icon name={c.icon as "Mail"} size={18} className="text-purple-300" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {OFFERS.map((offer) => (
+              <div key={offer.id} className="bg-white rounded-xl border border-gray-100 p-5 card-hover shadow-sm">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full astrex-gradient flex items-center justify-center text-white font-bold text-sm">
+                      {offer.seller[0]}
                     </div>
                     <div>
-                      <div className="text-gray-400 text-xs mb-0.5">{c.label}</div>
-                      <div className="text-white font-semibold text-sm">{c.value}</div>
+                      <div className="font-semibold text-gray-900 text-sm">{offer.seller}</div>
+                      <div className="flex items-center gap-1 text-xs text-gray-500">
+                        <Icon name="Star" size={11} className="text-amber-400 fill-amber-400" />
+                        <span className="font-medium text-gray-700">{offer.rating}</span>
+                        <span>({offer.reviews} отзывов)</span>
+                      </div>
                     </div>
                   </div>
-                ))}
+                  {offer.badge && (
+                    <span className={`text-xs font-semibold px-2 py-1 rounded-full ${BADGE_COLORS[offer.badge] || "bg-gray-100 text-gray-600"}`}>
+                      {offer.badge}
+                    </span>
+                  )}
+                </div>
 
-                <div className="rounded-2xl border border-purple-500/20 bg-gradient-to-br from-purple-600/10 to-violet-600/10 p-6">
-                  <div className="text-purple-300 font-bold text-lg mb-2">STARVELL</div>
-                  <p className="text-gray-400 text-sm leading-relaxed">
-                    Биржа игровых товаров и услуг. Покупай и продавай напрямую у других игроков безопасно и быстро.
-                  </p>
+                <div className="mb-1">
+                  <span className="text-xs text-violet-600 font-medium bg-violet-50 px-2 py-0.5 rounded">{offer.game}</span>
+                </div>
+                <h3 className="font-semibold text-gray-900 mb-3 mt-2">{offer.title}</h3>
+
+                <div className="flex items-center justify-between">
+                  <span className="text-2xl font-black text-violet-600">{offer.price}</span>
+                  <Link
+                    to={`/offer/${offer.id}`}
+                    className="px-4 py-2 bg-violet-600 text-white text-sm font-semibold rounded-lg hover:bg-violet-700 transition-colors"
+                  >
+                    Купить
+                  </Link>
                 </div>
               </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
-              {/* Форма */}
-              <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm p-6 space-y-4">
-                <div className="space-y-1">
-                  <label className="text-gray-400 text-xs font-medium uppercase tracking-wider">Имя</label>
-                  <input
-                    type="text"
-                    placeholder="Ваше имя"
-                    className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-gray-600 focus:outline-none focus:border-purple-500/50 text-sm transition-colors"
-                  />
+      {/* HOW IT WORKS */}
+      <section className="py-16 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-3">Как это работает</h2>
+            <p className="text-gray-500">Три простых шага до получения товара</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {HOW_IT_WORKS.map((step, i) => (
+              <div key={i} className="text-center relative">
+                {i < HOW_IT_WORKS.length - 1 && (
+                  <div className="hidden md:block absolute top-10 left-full w-full h-0.5 bg-gradient-to-r from-violet-200 to-transparent -translate-x-8 z-0" />
+                )}
+                <div className="relative z-10 w-20 h-20 rounded-2xl astrex-gradient mx-auto mb-5 flex items-center justify-center shadow-lg shadow-violet-200">
+                  <Icon name={step.icon} size={32} className="text-white" />
                 </div>
-                <div className="space-y-1">
-                  <label className="text-gray-400 text-xs font-medium uppercase tracking-wider">Email</label>
-                  <input
-                    type="email"
-                    placeholder="your@email.com"
-                    className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-gray-600 focus:outline-none focus:border-purple-500/50 text-sm transition-colors"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-gray-400 text-xs font-medium uppercase tracking-wider">Сообщение</label>
-                  <textarea
-                    rows={4}
-                    placeholder="Опишите ваш вопрос..."
-                    className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-gray-600 focus:outline-none focus:border-purple-500/50 text-sm transition-colors resize-none"
-                  />
-                </div>
-                <button className="w-full py-3 rounded-xl bg-gradient-to-r from-purple-600 to-violet-600 text-white font-bold hover:from-purple-500 hover:to-violet-500 transition-all shadow-lg shadow-purple-500/20 text-sm">
-                  Отправить сообщение
-                </button>
+                <div className="inline-block px-2 py-0.5 rounded text-xs font-bold text-violet-600 bg-violet-50 mb-2">ШАГ {step.step}</div>
+                <h3 className="text-lg font-bold text-gray-900 mb-2">{step.title}</h3>
+                <p className="text-gray-500 text-sm leading-relaxed">{step.desc}</p>
               </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* FEATURES */}
+      <section className="py-16 bg-white border-t border-gray-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-3">Почему выбирают ASTREX</h2>
+            <p className="text-gray-500">Надёжная платформа для игровой торговли</p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {FEATURES.map((feature, i) => (
+              <div key={i} className="bg-gray-50 rounded-xl p-6 border border-gray-100 card-hover">
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 ${feature.color}`}>
+                  <Icon name={feature.icon} size={24} />
+                </div>
+                <h3 className="font-bold text-gray-900 mb-2">{feature.title}</h3>
+                <p className="text-gray-500 text-sm leading-relaxed">{feature.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* FOOTER */}
+      <footer className="bg-gray-900 text-gray-400 py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+            <div className="md:col-span-1">
+              <Link to="/" className="flex items-center gap-2 mb-4">
+                <div className="w-8 h-8 rounded-lg astrex-gradient flex items-center justify-center">
+                  <Icon name="Zap" size={16} className="text-white" />
+                </div>
+                <span className="text-xl font-black text-white tracking-tight">ASTREX</span>
+              </Link>
+              <p className="text-sm text-gray-500 leading-relaxed">
+                Биржа игровых товаров нового поколения. Безопасные P2P сделки.
+              </p>
+            </div>
+
+            <div>
+              <h4 className="font-semibold text-white mb-4 text-sm">Платформа</h4>
+              <ul className="space-y-2 text-sm">
+                <li><Link to="/" className="hover:text-white transition-colors">Каталог</Link></li>
+                <li><Link to="/register" className="hover:text-white transition-colors">Стать продавцом</Link></li>
+                <li><a href="#" className="hover:text-white transition-colors">Как работает</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Комиссии</a></li>
+              </ul>
+            </div>
+
+            <div>
+              <h4 className="font-semibold text-white mb-4 text-sm">Игры</h4>
+              <ul className="space-y-2 text-sm">
+                <li><Link to="/game/roblox" className="hover:text-white transition-colors">Roblox</Link></li>
+                <li><Link to="/game/cs2" className="hover:text-white transition-colors">CS2</Link></li>
+                <li><Link to="/game/standoff-2" className="hover:text-white transition-colors">Standoff 2</Link></li>
+                <li><Link to="/game/valorant" className="hover:text-white transition-colors">Valorant</Link></li>
+              </ul>
+            </div>
+
+            <div>
+              <h4 className="font-semibold text-white mb-4 text-sm">Поддержка</h4>
+              <ul className="space-y-2 text-sm">
+                <li><a href="#" className="hover:text-white transition-colors">Помощь</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Правила</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Конфиденциальность</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Контакты</a></li>
+              </ul>
             </div>
           </div>
-        </section>
-      </div>
 
-      {/* DOT NAVIGATION */}
-      <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-4 py-3 rounded-full border border-white/10 bg-black/50 backdrop-blur-xl">
-        {sections.map((_, i) => (
-          <button
-            key={i}
-            onClick={() => scrollTo(i)}
-            className={`rounded-full transition-all ${
-              activeSection === i
-                ? "w-6 h-2 bg-purple-400"
-                : "w-2 h-2 bg-gray-600 hover:bg-gray-400"
-            }`}
-          />
-        ))}
-      </div>
-    </main>
-  )
+          <div className="border-t border-gray-800 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <p className="text-xs text-gray-600">© 2024 ASTREX. Все права защищены.</p>
+            <p className="text-xs text-gray-600">Безопасная P2P торговля игровыми ценностями</p>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
 }
