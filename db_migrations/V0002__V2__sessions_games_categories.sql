@@ -1,0 +1,24 @@
+CREATE TABLE sessions (
+  id VARCHAR(64) PRIMARY KEY,
+  user_id INT NOT NULL REFERENCES users(id),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  expires_at TIMESTAMPTZ NOT NULL DEFAULT NOW() + INTERVAL '30 days'
+);
+
+CREATE TABLE games (
+  id SERIAL PRIMARY KEY,
+  slug VARCHAR(50) UNIQUE NOT NULL,
+  name VARCHAR(100) NOT NULL,
+  emoji VARCHAR(10) NOT NULL DEFAULT '🎮',
+  color_from VARCHAR(50) NOT NULL DEFAULT 'from-purple-400',
+  color_to VARCHAR(50) NOT NULL DEFAULT 'to-violet-500',
+  description TEXT,
+  offers_count INT NOT NULL DEFAULT 0,
+  is_active BOOLEAN NOT NULL DEFAULT true
+);
+
+CREATE TABLE offer_categories (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(50) NOT NULL,
+  slug VARCHAR(50) NOT NULL
+);

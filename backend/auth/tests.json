@@ -1,0 +1,26 @@
+{
+  "tests": [
+    {
+      "name": "GET /me unauthorized",
+      "method": "GET",
+      "path": "/me",
+      "expectedStatus": 401
+    },
+    {
+      "name": "POST /register",
+      "method": "POST",
+      "path": "/register",
+      "body": {"username": "testuser", "email": "test@astrex.ru", "password": "123456"},
+      "expectedStatus": 200,
+      "expectedBody": {"session_id": "string"},
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "POST /login wrong password",
+      "method": "POST",
+      "path": "/login",
+      "body": {"email": "test@astrex.ru", "password": "wrongpass"},
+      "expectedStatus": 401
+    }
+  ]
+}

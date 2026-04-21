@@ -1,0 +1,20 @@
+{
+  "tests": [
+    {
+      "name": "GET all offers",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 200,
+      "expectedBody": {"offers": [], "total": 0},
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "GET offers by game",
+      "method": "GET",
+      "path": "/?game=roblox",
+      "expectedStatus": 200,
+      "expectedBody": {"offers": [], "total": 0},
+      "bodyMatcher": "partial"
+    }
+  ]
+}

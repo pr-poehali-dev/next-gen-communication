@@ -1,19 +1,54 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
-import Icon from "@/components/ui/icon";
+import { useState } from "react"
+import { Link, useNavigate } from "react-router-dom"
+import Icon from "@/components/ui/icon"
+import { authApi, saveSession } from "@/api"
 
 export default function RegisterPage() {
-  const [username, setUsername] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [agreed, setAgreed] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
+  const navigate = useNavigate()
+  const [username, setUsername] = useState("")
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirm, setShowConfirm] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState("")
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-  };
+  const passwordsMatch = confirmPassword === "" || password === confirmPassword
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError("")
+
+    if (!username.trim() || !email.trim() || !password.trim() || !confirmPassword.trim()) {
+      setError("Пожалуйста, заполните все поля")
+      return
+    }
+    if (password !== confirmPassword) {
+      setError("Пароли не совпадают")
+      return
+    }
+
+    setLoading(true)
+    try {
+      const data = await authApi.register({ username, email, password }) as Record<string, unknown>
+      if (data?.error || data?.detail) {
+        setError(String(data.error || data.detail))
+      } else {
+        const sessionId = String(data?.session_id || data?.token || "")
+        if (sessionId) {
+          saveSession(sessionId)
+          navigate("/")
+        } else {
+          setError("Регистрация прошла успешно, но не удалось получить сессию. Войдите вручную.")
+        }
+      }
+    } catch {
+      setError("Ошибка сети. Попробуйте ещё раз.")
+    } finally {
+      setLoading(false)
+    }
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center px-4 py-10">
@@ -31,13 +66,18 @@ export default function RegisterPage() {
         </div>
 
         {/* Card */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-xl p-8">
+          {error && (
+            <div className="mb-4 bg-red-50 border border-red-200 rounded-xl px-4 py-3 flex items-center gap-2 text-sm text-red-600">
+              <Icon name="AlertCircle" size={16} />
+              {error}
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Username */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                Имя пользователя
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Имя пользователя</label>
               <div className="relative">
                 <Icon name="User" size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                 <input
@@ -53,9 +93,7 @@ export default function RegisterPage() {
 
             {/* Email */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                Email
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
               <div className="relative">
                 <Icon name="Mail" size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                 <input
@@ -71,9 +109,7 @@ export default function RegisterPage() {
 
             {/* Password */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                Пароль
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Пароль</label>
               <div className="relative">
                 <Icon name="Lock" size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                 <input
@@ -96,9 +132,7 @@ export default function RegisterPage() {
 
             {/* Confirm Password */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                Подтвердите пароль
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Подтвердите пароль</label>
               <div className="relative">
                 <Icon name="Lock" size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                 <input
@@ -106,7 +140,9 @@ export default function RegisterPage() {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="Повторите пароль"
-                  className="w-full pl-10 pr-10 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-violet-400 focus:bg-white transition-all"
+                  className={`w-full pl-10 pr-10 py-3 bg-gray-50 border rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:bg-white transition-all ${
+                    !passwordsMatch ? "border-red-300 focus:border-red-400" : "border-gray-200 focus:border-violet-400"
+                  }`}
                   required
                 />
                 <button
@@ -117,7 +153,7 @@ export default function RegisterPage() {
                   <Icon name={showConfirm ? "EyeOff" : "Eye"} size={16} />
                 </button>
               </div>
-              {confirmPassword && password !== confirmPassword && (
+              {!passwordsMatch && (
                 <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
                   <Icon name="AlertCircle" size={12} />
                   Пароли не совпадают
@@ -125,32 +161,14 @@ export default function RegisterPage() {
               )}
             </div>
 
-            {/* Agree checkbox */}
-            <div className="flex items-start gap-3 pt-1">
-              <button
-                type="button"
-                onClick={() => setAgreed(!agreed)}
-                className={`w-5 h-5 rounded border-2 flex-shrink-0 flex items-center justify-center mt-0.5 transition-colors ${
-                  agreed ? "bg-violet-600 border-violet-600" : "border-gray-300 bg-white"
-                }`}
-              >
-                {agreed && <Icon name="Check" size={12} className="text-white" />}
-              </button>
-              <span className="text-sm text-gray-600 leading-relaxed">
-                Я принимаю{" "}
-                <a href="#" className="text-violet-600 hover:text-violet-700">правила платформы</a>
-                {" "}и соглашаюсь с{" "}
-                <a href="#" className="text-violet-600 hover:text-violet-700">политикой конфиденциальности</a>
-              </span>
-            </div>
-
             {/* Submit */}
             <button
               type="submit"
-              disabled={!agreed}
-              className="w-full py-3.5 astrex-gradient text-white font-bold rounded-xl hover:opacity-90 transition-opacity shadow-lg shadow-violet-200 text-sm mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={loading || !passwordsMatch}
+              className="w-full py-3.5 astrex-gradient text-white font-bold rounded-xl hover:opacity-90 transition-opacity shadow-lg shadow-violet-200 text-sm mt-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
-              Создать аккаунт
+              {loading && <Icon name="Loader2" size={16} className="animate-spin" />}
+              {loading ? "Создание аккаунта..." : "Создать аккаунт"}
             </button>
           </form>
         </div>
@@ -171,5 +189,5 @@ export default function RegisterPage() {
         </p>
       </div>
     </div>
-  );
+  )
 }

@@ -1,15 +1,39 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
-import Icon from "@/components/ui/icon";
+import { useState } from "react"
+import { Link, useNavigate } from "react-router-dom"
+import Icon from "@/components/ui/icon"
+import { authApi, saveSession } from "@/api"
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
+  const navigate = useNavigate()
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [showPassword, setShowPassword] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState("")
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-  };
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError("")
+    setLoading(true)
+    try {
+      const data = await authApi.login({ email, password }) as Record<string, unknown>
+      if (data?.error || data?.detail) {
+        setError(String(data.error || data.detail))
+      } else {
+        const sessionId = String(data?.session_id || data?.token || "")
+        if (sessionId) {
+          saveSession(sessionId)
+          navigate("/")
+        } else {
+          setError("Не удалось получить сессию. Проверьте данные и попробуйте снова.")
+        }
+      }
+    } catch {
+      setError("Ошибка сети. Попробуйте ещё раз.")
+    } finally {
+      setLoading(false)
+    }
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center px-4">
@@ -27,13 +51,18 @@ export default function LoginPage() {
         </div>
 
         {/* Card */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-xl p-8">
+          {error && (
+            <div className="mb-4 bg-red-50 border border-red-200 rounded-xl px-4 py-3 flex items-center gap-2 text-sm text-red-600">
+              <Icon name="AlertCircle" size={16} />
+              {error}
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* Email */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                Email
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
               <div className="relative">
                 <Icon name="Mail" size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                 <input
@@ -49,14 +78,7 @@ export default function LoginPage() {
 
             {/* Password */}
             <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <label className="block text-sm font-medium text-gray-700">
-                  Пароль
-                </label>
-                <a href="#" className="text-xs text-violet-600 hover:text-violet-700 transition-colors">
-                  Забыли пароль?
-                </a>
-              </div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Пароль</label>
               <div className="relative">
                 <Icon name="Lock" size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                 <input
@@ -80,24 +102,13 @@ export default function LoginPage() {
             {/* Submit */}
             <button
               type="submit"
-              className="w-full py-3.5 astrex-gradient text-white font-bold rounded-xl hover:opacity-90 transition-opacity shadow-lg shadow-violet-200 text-sm"
+              disabled={loading}
+              className="w-full py-3.5 astrex-gradient text-white font-bold rounded-xl hover:opacity-90 transition-opacity shadow-lg shadow-violet-200 text-sm disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
-              Войти
+              {loading && <Icon name="Loader2" size={16} className="animate-spin" />}
+              {loading ? "Вход..." : "Войти"}
             </button>
           </form>
-
-          {/* Divider */}
-          <div className="flex items-center gap-3 my-6">
-            <div className="flex-1 h-px bg-gray-100" />
-            <span className="text-xs text-gray-400">или</span>
-            <div className="flex-1 h-px bg-gray-100" />
-          </div>
-
-          {/* Social */}
-          <button className="w-full py-3 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors flex items-center justify-center gap-2">
-            <Icon name="Globe" size={16} className="text-gray-400" />
-            Войти через Google
-          </button>
         </div>
 
         {/* Register link */}
@@ -116,5 +127,5 @@ export default function LoginPage() {
         </p>
       </div>
     </div>
-  );
+  )
 }
